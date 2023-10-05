@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"net/http"
 	"net/url"
+	"time"
 
 	dsig "github.com/russellhaering/goxmldsig"
 
@@ -29,6 +30,7 @@ type Options struct {
 	RequestedAuthnContext *saml.RequestedAuthnContext
 	CookieSameSite        http.SameSite
 	CookieName            string
+	CookieMaxAge          time.Duration
 	RelayStateFunc        func(w http.ResponseWriter, r *http.Request) string
 	LogoutBindings        []string
 }
@@ -52,10 +54,14 @@ func DefaultSessionProvider(opts Options) CookieSessionProvider {
 	if cookieName == "" {
 		cookieName = defaultSessionCookieName
 	}
+	cookieMaxAge := opts.CookieMaxAge
+	if cookieMaxAge == 0 {
+		cookieMaxAge = defaultSessionMaxAge
+	}
 	return CookieSessionProvider{
 		Name:     cookieName,
 		Domain:   opts.URL.Host,
-		MaxAge:   defaultSessionMaxAge,
+		MaxAge:   cookieMaxAge,
 		HTTPOnly: true,
 		Secure:   opts.URL.Scheme == "https",
 		SameSite: opts.CookieSameSite,
